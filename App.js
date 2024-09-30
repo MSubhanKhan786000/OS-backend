@@ -246,29 +246,59 @@ app.post('/call', async (req, res) => {
 
 //multer cloudinary
 
-app.post('/imaginnes', upload.single('image'), async (req, res) => {
-  try {
-    // Upload image to Cloudinary
-    const result = await cloudinary.uploader.upload(req.file.path, {
-      folder: 'your_folder_name',
-      public_id: 'optional_public_id',
-      resource_type: 'auto'
-    });
+// app.post('/imaginnes', upload.single('image'), async (req, res) => {
+//   try {
+//     // Upload image to Cloudinary
+//     const result = await cloudinary.uploader.upload(req.file.path, {
+//       folder: 'your_folder_name',
+//       public_id: 'optional_public_id',
+//       resource_type: 'auto'
+//     });
 
+//     const newPost = new Earning({
+//       fname: req.body.fname,
+//       lname: req.body.lname,
+//       pnumber: req.body.pnumber,
+//       email: req.body.email,
+//       image: result.secure_url,
+//     });
+//     await newPost.save();
+//     res.status(201).json({ success: true, data: newPost });
+//   } catch (error) {
+//     console.error('Error uploading image:', error);
+//     res.status(500).json({ success: false, error: 'Internal server error' });
+//   }
+// });
+
+app.post('/imaginnes', upload.array('images', 5), async (req, res) => { // 'images' is the field name in the form and 10 is the max number of files
+  try {
+    const uploadPromises = req.files.map(file =>
+      cloudinary.uploader.upload(file.path, {
+        folder: 'your_folder_name',
+        resource_type: 'auto'
+      })
+    );
+
+    // Wait for all uploads to finish
+    const results = await Promise.all(uploadPromises);
+
+    // Create a new post with the image URLs
     const newPost = new Earning({
       fname: req.body.fname,
       lname: req.body.lname,
       pnumber: req.body.pnumber,
       email: req.body.email,
-      image: result.secure_url,
+      images: results.map(result => result.secure_url) // Store multiple image URLs
     });
+
     await newPost.save();
     res.status(201).json({ success: true, data: newPost });
   } catch (error) {
-    console.error('Error uploading image:', error);
+    console.error('Error uploading images:', error);
     res.status(500).json({ success: false, error: 'Internal server error' });
   }
 });
+
 
 //checkout
 app.post('/checkout/:data', async (req, res) => {
