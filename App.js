@@ -1029,3 +1029,28 @@ process.on('SIGINT', () => {
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });
+
+
+// --------------------------------------------------------------------------
+
+
+//  get product id  Or fetch product id
+
+app.get('/getCollection/:productId', async (req, res) => {
+  try {
+    const { productId } = req.params; 
+    console.log("Product Id", productId);
+    
+
+    const collection = await Collections.findById(productId);
+
+    if (!collection) {
+      return res.status(404).json({ success: false, error: 'Collection not found' });
+    }
+
+    res.json({ success: true, data: collection });
+  } catch (error) {
+    console.error('Error fetching collection:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
